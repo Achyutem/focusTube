@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A distraction-free YouTube study app." />
+  <meta name="theme-color" content="#0a0a0a" id="theme-meta" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="FocusTube" />
+  <title>FocusTube</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Sidebar ─────────────────────────────────── -->
+  <aside id="sidebar" class="sidebar">
+
+    <div class="sidebar-top">
+      <div class="brand">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.4"/>
+          <circle cx="9" cy="9" r="3.5" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="9" y1="1" x2="9" y2="5"   stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <line x1="9" y1="13" x2="9" y2="17"  stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <line x1="1" y1="9" x2="5" y2="9"    stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <line x1="13" y1="9" x2="17" y2="9"  stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <span>FocusTube</span>
+      </div>
+      <button id="sidebar-close" class="icon-btn" aria-label="Close sidebar">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Playlists section -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Playlists</div>
+      <ul id="playlist-list" class="pl-list" role="list"></ul>
+    </div>
+
+    <!-- Videos section -->
+    <div class="sidebar-section sidebar-videos">
+      <div class="sidebar-label" id="videos-label" style="display:none">Videos</div>
+      <div id="video-list-wrap" class="video-list-wrap">
+        <!-- states -->
+        <div id="vl-empty" class="vl-state hidden">Select a playlist to see videos</div>
+        <div id="vl-no-key" class="vl-state hidden">
+          <span>Add your YouTube API key to browse videos</span>
+          <button id="vl-set-key-btn" class="vl-key-btn">Set API key</button>
+        </div>
+        <div id="vl-loading" class="vl-state hidden">
+          <div class="spinner"></div>
+        </div>
+        <div id="vl-error" class="vl-state vl-error hidden"></div>
+        <ul id="video-list" class="video-list" role="list"></ul>
+      </div>
+    </div>
+
+    <!-- Sidebar footer -->
+    <div class="sidebar-footer">
+      <button id="api-key-btn" class="ghost-row">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="5.5" cy="5.5" r="3.5" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M8.5 8.5l4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>
+        <span id="api-key-label">Set API key</span>
+      </button>
+      <div class="desktop-only" style="display:flex;flex-direction:column;gap:2px">
+        <button id="import-btn" class="ghost-row">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1v8M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M1 11h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          Import
+        </button>
+        <button id="export-btn" class="ghost-row">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 9V1M4 4l3-3 3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M1 11h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          Export
+        </button>
+      </div>
+    </div>
+
+  </aside>
+
+  <div id="overlay" class="overlay" aria-hidden="true"></div>
+
+  <!-- ── Main ────────────────────────────────────── -->
+  <div class="layout">
+
+    <header class="header">
+      <button id="menu-btn" class="icon-btn mobile-only" aria-label="Open menu">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M2 4.5h14M2 9h14M2 13.5h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <span id="now-playing" class="now-playing"></span>
+
+      <div class="header-actions">
+        <button id="theme-btn" class="icon-btn" aria-label="Toggle theme">
+          <svg id="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg id="icon-sun" width="17" height="17" viewBox="0 0 17 17" fill="none" class="hidden">
+            <circle cx="8.5" cy="8.5" r="3" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M8.5 1v2M8.5 14v2M1 8.5h2M14 8.5h2M3.4 3.4l1.4 1.4M12.2 12.2l1.4 1.4M3.4 13.6l1.4-1.4M12.2 4.8l1.4-1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button id="add-btn" class="btn-add" aria-label="Add playlist">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span>Add</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- States (shown when no playlist selected / offline) -->
+      <div id="empty-state" class="center-state">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <rect x="3" y="7" width="34" height="26" rx="4" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M16 15l12 5-12 5V15z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+        </svg>
+        <p class="state-title">No playlist selected</p>
+        <p class="state-desc">Add a playlist and select it to start watching</p>
+      </div>
+
+      <div id="offline-state" class="center-state hidden">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path d="M5 5l30 30" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M20 29a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" fill="currentColor"/>
+          <path d="M13 22a10 10 0 0110.8-2.4M7 16c3-2.5 6.8-4 11-4M26 17c1.7 1.2 3.1 2.9 4 5M32 11c-2.8-2.5-6.5-4-10.5-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <p class="state-title">You're offline</p>
+        <p class="state-desc">Videos require an internet connection</p>
+      </div>
+
+      <!-- Player + mobile video list -->
+      <div id="player-wrapper" class="player-wrapper hidden">
+        <!-- 16:9 video box -->
+        <div class="player-box">
+          <iframe
+            id="youtube-player"
+            class="youtube-player"
+            src=""
+            title="YouTube playlist player"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          ></iframe>
+        </div>
+
+        <!-- Video list below player – mobile only -->
+        <div class="mobile-video-section">
+          <div id="mvl-empty"   class="vl-state hidden">Select a playlist to see videos</div>
+          <div id="mvl-no-key"  class="vl-state hidden">
+            <span>Add your YouTube API key to browse videos</span>
+            <button id="mvl-set-key-btn" class="vl-key-btn">Set API key</button>
+          </div>
+          <div id="mvl-loading" class="vl-state hidden"><div class="spinner"></div></div>
+          <div id="mvl-error"   class="vl-state vl-error hidden"></div>
+          <ul id="mobile-video-list" class="video-list" role="list"></ul>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- ── Add Playlist sheet ───────────────────────── -->
+  <div id="add-sheet" class="sheet hidden" role="dialog" aria-modal="true">
+    <div class="sheet-backdrop"></div>
+    <div class="sheet-box">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">Add Playlist</h2>
+      <div class="form-group">
+        <label class="form-label" for="url-input">YouTube Playlist URL</label>
+        <input id="url-input" class="form-input" type="url"
+          placeholder="youtube.com/playlist?list=..."
+          autocomplete="off" spellcheck="false" inputmode="url" />
+        <span id="url-error" class="form-error hidden">Couldn't find a playlist ID in that URL.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="name-input">Name <span class="form-hint">(optional)</span></label>
+        <input id="name-input" class="form-input" type="text" placeholder="e.g. Physics Lectures" maxlength="80" />
+      </div>
+      <div id="dupe-warning" class="form-warning hidden">This playlist is already added.</div>
+      <div class="sheet-actions">
+        <button class="btn btn-ghost sheet-cancel">Cancel</button>
+        <button id="add-save-btn" class="btn btn-primary">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── API Key sheet ─────────────────────────────── -->
+  <div id="apikey-sheet" class="sheet hidden" role="dialog" aria-modal="true">
+    <div class="sheet-backdrop"></div>
+    <div class="sheet-box">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">YouTube API Key</h2>
+      <p class="sheet-desc">Used to fetch video lists. Your key is stored locally and never sent anywhere except Google's API.</p>
+      <div class="form-group">
+        <label class="form-label" for="apikey-input">API Key</label>
+        <input id="apikey-input" class="form-input" type="text"
+          placeholder="AIza..." autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="sheet-actions">
+        <button class="btn btn-ghost sheet-cancel">Cancel</button>
+        <button id="apikey-save-btn" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Playlist actions sheet ───────────────────── -->
+  <div id="action-sheet" class="sheet hidden" role="dialog" aria-modal="true">
+    <div class="sheet-backdrop"></div>
+    <div class="sheet-box sheet-box--sm">
+      <div class="sheet-handle"></div>
+      <p id="action-sheet-name" class="action-label"></p>
+      <div class="action-list">
+        <button id="action-rename" class="action-row">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <path d="M10.5 2l2.5 2.5-8 8H2.5V10l8-8z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          </svg>
+          Rename
+        </button>
+        <button id="action-delete" class="action-row action-danger">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <path d="M2 4h11M5.5 4V2.5h4V4M4.5 4v8a1 1 0 001 1h4a1 1 0 001-1V4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Delete
+        </button>
+      </div>
+      <button class="btn btn-ghost sheet-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ── Rename sheet ──────────────────────────────── -->
+  <div id="rename-sheet" class="sheet hidden" role="dialog" aria-modal="true">
+    <div class="sheet-backdrop"></div>
+    <div class="sheet-box">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">Rename</h2>
+      <div class="form-group">
+        <label class="form-label" for="rename-input">New name</label>
+        <input id="rename-input" class="form-input" type="text" maxlength="80" />
+      </div>
+      <div class="sheet-actions">
+        <button class="btn btn-ghost sheet-cancel">Cancel</button>
+        <button id="rename-save" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delete sheet ──────────────────────────────── -->
+  <div id="delete-sheet" class="sheet hidden" role="dialog" aria-modal="true">
+    <div class="sheet-backdrop"></div>
+    <div class="sheet-box sheet-box--sm">
+      <div class="sheet-handle"></div>
+      <p class="action-label">Delete <strong id="delete-name"></strong>?</p>
+      <p class="action-hint">This can't be undone.</p>
+      <div class="action-list">
+        <button id="delete-confirm" class="action-row action-danger">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <path d="M2 4h11M5.5 4V2.5h4V4M4.5 4v8a1 1 0 001 1h4a1 1 0 001-1V4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Delete
+        </button>
+      </div>
+      <button class="btn btn-ghost sheet-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <input type="file" id="import-file" accept=".json" style="display:none" />
+
+  <script src="app.js"></script>
+</body>
+</html>
